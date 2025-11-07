@@ -2,12 +2,39 @@ import SwiftUI
 
 /// 設定視圖
 struct SettingsView: View {
+    @ObservedObject var themeManager = ThemeManager.shared
     @State private var showResetAlert = false
     @State private var showResetSuccess = false
     @State private var deletedCount = 0
 
     var body: some View {
         Form {
+            // 外觀設定
+            Section {
+                Picker("主題模式", selection: $themeManager.currentTheme) {
+                    ForEach(ThemeManager.Theme.allCases) { theme in
+                        Text(theme.rawValue).tag(theme)
+                    }
+                }
+            } header: {
+                Text("外觀")
+            }
+
+            // 通知設定
+            Section {
+                NavigationLink {
+                    NotificationSettingsView()
+                } label: {
+                    HStack {
+                        Image(systemName: "bell.fill")
+                            .foregroundColor(.blue)
+                        Text("通知設定")
+                    }
+                }
+            } header: {
+                Text("通知")
+            }
+
             // 關於
             Section {
                 HStack {

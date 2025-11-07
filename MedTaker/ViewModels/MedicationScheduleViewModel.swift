@@ -11,6 +11,7 @@ class MedicationScheduleViewModel: ObservableObject {
 
     private let persistence = DataPersistenceService.shared
     private let api = SupabaseService.shared
+    private let notificationService = NotificationService.shared
 
     init() {
         loadSchedules()
@@ -46,6 +47,9 @@ class MedicationScheduleViewModel: ObservableObject {
         schedules.sort { $0.scheduledTime < $1.scheduledTime }
         persistence.addSchedule(schedule)
 
+        // 創建通知
+        notificationService.scheduleNotification(for: schedule)
+
         // 同步到 API
         Task {
             do {
@@ -64,6 +68,13 @@ class MedicationScheduleViewModel: ObservableObject {
             schedules.sort { $0.scheduledTime < $1.scheduledTime }
             persistence.updateSchedule(schedule)
 
+            // 更新通知
+            if schedule.isActive {
+                notificationService.scheduleNotification(for: schedule)
+            } else {
+                notificationService.cancelNotification(id: schedule.id)
+            }
+
             Task {
                 do {
                     try await api.updateSchedule(schedule)
@@ -79,6 +90,9 @@ class MedicationScheduleViewModel: ObservableObject {
     func deleteSchedule(_ schedule: MedicationSchedule) {
         schedules.removeAll { $0.id == schedule.id }
         persistence.deleteSchedule(id: schedule.id)
+
+        // 取消通知
+        notificationService.cancelNotification(id: schedule.id)
 
         Task {
             do {
