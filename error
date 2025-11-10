@@ -1,0 +1,5 @@
+       ^/Users/wenhsu/Documents/wenyen/med_taker/Medication Intake/MedTaker/MedTaker/Utilities/AnimationConstants.swift/Users/wenhsu/Documents/wenyen/med_taker/Medication Intake/MedTaker/MedTaker/Utilities/AnimationConstants.swift:115:25 Type 'Animation?' has no member 'quickSpring'
+/Users/wenhsu/Documents/wenyen/med_taker/Medication Intake/MedTaker/MedTaker/Utilities/AnimationConstants.swift:136:25 Type 'Animation?' has no member 'quickSpring'
+/Users/wenhsu/Documents/wenyen/med_taker/Medication Intake/MedTaker/MedTaker/Utilities/ColorTheme.swift/Users/wenhsu/Documents/wenyen/med_taker/Medication Intake/MedTaker/MedTaker/Utilities/ColorTheme.swift:178:54 Main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+
+
