@@ -144,7 +144,7 @@ struct SettingsView: View {
         // 同步到 API
         Task {
             let api = SupabaseService.shared
-            try? await api.resetAllRecords()
+            _ = try? await api.resetAllRecords()
         }
     }
 }

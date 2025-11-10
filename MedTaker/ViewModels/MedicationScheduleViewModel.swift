@@ -47,6 +47,7 @@ class MedicationScheduleViewModel: ObservableObject {
         schedules.append(schedule)
         schedules.sort { $0.scheduledTime < $1.scheduledTime }
         persistence.addSchedule(schedule)
+        notifySchedulesChanged()
 
         // 創建通知
         notificationService.scheduleNotification(for: schedule)
@@ -100,6 +101,7 @@ class MedicationScheduleViewModel: ObservableObject {
             schedules[index] = schedule
             schedules.sort { $0.scheduledTime < $1.scheduledTime }
             persistence.updateSchedule(schedule)
+            notifySchedulesChanged()
 
             // 更新通知
             if schedule.isActive {
@@ -123,6 +125,11 @@ class MedicationScheduleViewModel: ObservableObject {
     func deleteSchedule(_ schedule: MedicationSchedule) {
         schedules.removeAll { $0.id == schedule.id }
         persistence.deleteSchedule(id: schedule.id)
+
+        // 刪除該排程的所有每日記錄
+        let deletedCount = persistence.deleteRecords(for: schedule.id)
+        print("✓ 刪除排程 '\(schedule.name)' 及其 \(deletedCount) 條記錄")
+        notifySchedulesChanged()
 
         // 取消通知
         notificationService.cancelNotification(id: schedule.id)
@@ -148,4 +155,12 @@ class MedicationScheduleViewModel: ObservableObject {
     var activeSchedules: [MedicationSchedule] {
         schedules.filter { $0.isActive }
     }
+
+    private func notifySchedulesChanged() {
+        NotificationCenter.default.post(name: .schedulesUpdated, object: nil)
+    }
+}
+
+extension Notification.Name {
+    static let schedulesUpdated = Notification.Name("schedulesUpdated")
 }

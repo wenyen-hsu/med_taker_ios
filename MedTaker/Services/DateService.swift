@@ -6,14 +6,14 @@ class DateService {
 
     private init() {}
 
-    /// 判斷實際服藥時間是否準時（容差 ±15 分鐘）
+    /// 判斷實際服藥時間是否準時（不可晚於預定時間）
     /// - Parameters:
     ///   - scheduled: 預定時間
     ///   - actual: 實際時間
     /// - Returns: 是否準時
     func isOnTime(scheduled: Date, actual: Date) -> Bool {
-        let diffMinutes = Calendar.current.dateComponents([.minute], from: scheduled, to: actual).minute ?? 0
-        return abs(diffMinutes) <= 15
+        // 只要在預定時間之前或剛好服用即視為準時
+        return actual <= scheduled
     }
 
     /// 計算狀態基於預定和實際時間

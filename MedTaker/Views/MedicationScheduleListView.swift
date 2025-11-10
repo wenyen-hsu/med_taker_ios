@@ -6,6 +6,12 @@ struct MedicationScheduleListView: View {
     @State private var showAddSheet = false
     @State private var showDeleteAlert = false
     @State private var scheduleToDelete: MedicationSchedule?
+    var onSchedulesChanged: (() -> Void)? = nil
+
+    init(viewModel: MedicationScheduleViewModel, onSchedulesChanged: (() -> Void)? = nil) {
+        _viewModel = ObservedObject(wrappedValue: viewModel)
+        self.onSchedulesChanged = onSchedulesChanged
+    }
 
     var body: some View {
         ZStack {
@@ -28,6 +34,7 @@ struct MedicationScheduleListView: View {
         .sheet(isPresented: $showAddSheet) {
             AddMedicationView { schedule in
                 viewModel.addSchedule(schedule)
+                onSchedulesChanged?()
             }
         }
         .alert("確認刪除", isPresented: $showDeleteAlert) {
@@ -35,6 +42,7 @@ struct MedicationScheduleListView: View {
             Button("刪除", role: .destructive) {
                 if let schedule = scheduleToDelete {
                     viewModel.deleteSchedule(schedule)
+                    onSchedulesChanged?()
                 }
             }
         } message: {
@@ -59,6 +67,7 @@ struct MedicationScheduleListView: View {
                         schedule: schedule,
                         onToggleActive: {
                             viewModel.toggleScheduleActive(schedule)
+                            onSchedulesChanged?()
                         },
                         onDelete: {
                             scheduleToDelete = schedule

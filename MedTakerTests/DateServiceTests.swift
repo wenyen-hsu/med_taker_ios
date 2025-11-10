@@ -12,13 +12,6 @@ final class DateServiceTests: XCTestCase {
 
     // MARK: - isOnTime 測試
 
-    func testIsOnTime_WithinTolerance_ReturnsTrue() {
-        let scheduled = Date()
-        let actual = scheduled.addingTimeInterval(10 * 60) // +10 分鐘
-
-        XCTAssertTrue(dateService.isOnTime(scheduled: scheduled, actual: actual))
-    }
-
     func testIsOnTime_ExactlyOnTime_ReturnsTrue() {
         let scheduled = Date()
         let actual = scheduled
@@ -26,16 +19,16 @@ final class DateServiceTests: XCTestCase {
         XCTAssertTrue(dateService.isOnTime(scheduled: scheduled, actual: actual))
     }
 
-    func testIsOnTime_Within15MinutesEarly_ReturnsTrue() {
+    func testIsOnTime_Early_ReturnsTrue() {
         let scheduled = Date()
         let actual = scheduled.addingTimeInterval(-15 * 60) // -15 分鐘
 
         XCTAssertTrue(dateService.isOnTime(scheduled: scheduled, actual: actual))
     }
 
-    func testIsOnTime_OutsideTolerance_ReturnsFalse() {
+    func testIsOnTime_AfterScheduled_ReturnsFalse() {
         let scheduled = Date()
-        let actual = scheduled.addingTimeInterval(20 * 60) // +20 分鐘
+        let actual = scheduled.addingTimeInterval(2 * 60) // +2 分鐘
 
         XCTAssertFalse(dateService.isOnTime(scheduled: scheduled, actual: actual))
     }
@@ -47,11 +40,18 @@ final class DateServiceTests: XCTestCase {
         XCTAssertFalse(dateService.isOnTime(scheduled: scheduled, actual: actual))
     }
 
+    func testIsOnTime_VeryEarly_ReturnsTrue() {
+        let scheduled = Date()
+        let actual = scheduled.addingTimeInterval(-4 * 60 * 60) // -4 小時
+
+        XCTAssertTrue(dateService.isOnTime(scheduled: scheduled, actual: actual))
+    }
+
     // MARK: - calculateStatus 測試
 
     func testCalculateStatus_OnTime_ReturnsOnTime() {
         let scheduled = Date()
-        let actual = scheduled.addingTimeInterval(5 * 60)
+        let actual = scheduled // 準時服用
 
         let status = dateService.calculateStatus(scheduled: scheduled, actual: actual)
 
@@ -60,11 +60,20 @@ final class DateServiceTests: XCTestCase {
 
     func testCalculateStatus_Late_ReturnsLate() {
         let scheduled = Date()
-        let actual = scheduled.addingTimeInterval(30 * 60)
+        let actual = scheduled.addingTimeInterval(2 * 60)
 
         let status = dateService.calculateStatus(scheduled: scheduled, actual: actual)
 
         XCTAssertEqual(status, .late)
+    }
+
+    func testCalculateStatus_Early_ReturnsOnTime() {
+        let scheduled = Date()
+        let actual = scheduled.addingTimeInterval(-60 * 60)
+
+        let status = dateService.calculateStatus(scheduled: scheduled, actual: actual)
+
+        XCTAssertEqual(status, .onTime)
     }
 
     // MARK: - shouldGenerateMedication 測試

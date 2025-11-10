@@ -1,7 +1,7 @@
 import Foundation
 
 /// 每日用藥記錄模型
-struct DailyMedicationRecord: Identifiable, Codable, Equatable {
+struct DailyMedicationRecord: Identifiable, Codable, Equatable, Hashable {
     let id: String
     let scheduleId: String
     var medicationName: String

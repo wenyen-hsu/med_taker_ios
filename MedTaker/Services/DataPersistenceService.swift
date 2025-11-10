@@ -152,6 +152,24 @@ class DataPersistenceService {
         return fetchAllRecords().filter { $0.scheduleId == scheduleId }
     }
 
+    /// 刪除某個排程的所有記錄
+    func deleteRecords(for scheduleId: String) -> Int {
+        var records = fetchAllRecords()
+        let originalCount = records.count
+        records.removeAll { $0.scheduleId == scheduleId }
+        saveRecords(records)
+        return originalCount - records.count // 返回刪除的記錄數量
+    }
+
+    /// 刪除所有不屬於有效排程的記錄
+    func deleteRecordsNotIn(scheduleIds: Set<String>) {
+        var records = fetchAllRecords()
+        let filtered = records.filter { scheduleIds.contains($0.scheduleId) }
+        if filtered.count != records.count {
+            saveRecords(filtered)
+        }
+    }
+
     /// 清除所有資料（用於測試或重置）
     func clearAllData() {
         userDefaults.removeObject(forKey: schedulesKey)

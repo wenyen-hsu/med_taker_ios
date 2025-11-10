@@ -2,6 +2,7 @@ import XCTest
 @testable import MedTaker
 
 /// NotificationService 的單元測試
+@MainActor
 final class NotificationServiceTests: XCTestCase {
     var notificationService: NotificationService!
 

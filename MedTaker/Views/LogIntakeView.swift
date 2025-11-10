@@ -6,11 +6,18 @@ struct LogIntakeView: View {
     let medication: DailyMedicationRecord
     let onConfirm: (Date, String) -> Void
 
-    @State private var actualTime = Date()
+    @State private var actualTime: Date
     @State private var notes = ""
 
+    init(medication: DailyMedicationRecord, onConfirm: @escaping (Date, String) -> Void) {
+        self.medication = medication
+        self.onConfirm = onConfirm
+        _actualTime = State(initialValue: medication.actualTime ?? medication.scheduledTime)
+    }
+
     var body: some View {
-        Form {
+        NavigationStack {
+            Form {
                 // 藥物資訊
                 Section {
                     HStack {
@@ -34,20 +41,24 @@ struct LogIntakeView: View {
 
                 // 時間資訊
                 Section {
-                    HStack {
-                        Text("預定時間")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(medication.scheduledTime, style: .time)
-                            .bold()
-                            .foregroundColor(.blue)
-                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("預定時間")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(medication.scheduledTime, style: .time)
+                                .bold()
+                                .foregroundColor(.blue)
+                        }
 
-                    DatePicker(
-                        "實際服用時間",
-                        selection: $actualTime,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
+                        DatePicker(
+                            "實際服用時間",
+                            selection: $actualTime,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.compact)
+                        .padding(.top, 4)
+                    }
                 } header: {
                     Text("時間")
                 } footer: {
@@ -61,26 +72,23 @@ struct LogIntakeView: View {
                 } header: {
                     Text("備註（選填）")
                 }
-        }
-        .navigationTitle("記錄服藥")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("取消") {
-                    dismiss()
-                }
             }
+            .navigationTitle("記錄服藥")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
 
-            ToolbarItem(placement: .confirmationAction) {
-                Button("確認") {
-                    onConfirm(actualTime, notes)
-                    dismiss()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("確認") {
+                        onConfirm(actualTime, notes)
+                        dismiss()
+                    }
                 }
             }
-        }
-        .onAppear {
-            // 預設為當前時間
-            actualTime = Date()
         }
     }
 
@@ -104,13 +112,15 @@ struct LogIntakeView: View {
 }
 
 #Preview {
-    LogIntakeView(
-        medication: DailyMedicationRecord(
-            scheduleId: "1",
-            medicationName: "測試藥物",
-            dosage: "10mg",
-            scheduledTime: Date(),
-            date: Date()
-        )
-    ) { _, _ in }
+    NavigationStack {
+        LogIntakeView(
+            medication: DailyMedicationRecord(
+                scheduleId: "1",
+                medicationName: "測試藥物",
+                dosage: "10mg",
+                scheduledTime: Date(),
+                date: Date()
+            )
+        ) { _, _ in }
+    }
 }

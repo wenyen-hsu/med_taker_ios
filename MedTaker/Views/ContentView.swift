@@ -9,7 +9,7 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             // Tab 1: 日曆視圖
-            NavigationView {
+            NavigationStack {
                 CalendarTabView(calendarViewModel: calendarViewModel)
             }
             .tabItem {
@@ -18,8 +18,10 @@ struct ContentView: View {
             .tag(0)
 
             // Tab 2: 藥物排程
-            NavigationView {
-                MedicationScheduleListView(viewModel: scheduleViewModel)
+            NavigationStack {
+                MedicationScheduleListView(viewModel: scheduleViewModel) {
+                    calendarViewModel.loadMonth(calendarViewModel.currentMonth)
+                }
             }
             .tabItem {
                 Label("排程", systemImage: "pills.fill")
@@ -27,7 +29,7 @@ struct ContentView: View {
             .tag(1)
 
             // Tab 3: 設定
-            NavigationView {
+            NavigationStack {
                 SettingsView()
             }
             .tabItem {
@@ -36,6 +38,12 @@ struct ContentView: View {
             .tag(2)
         }
         .accentColor(.blue)
+        .onChange(of: selectedTab) { oldValue, newValue in
+            // 當切換回日曆 tab 時，重新載入以確保顯示最新資料
+            if newValue == 0 {
+                calendarViewModel.loadMonth(calendarViewModel.currentMonth)
+            }
+        }
     }
 }
 
@@ -56,8 +64,12 @@ struct CalendarTabView: View {
         }
         .navigationTitle("服藥追蹤")
         .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            // 視圖出現時重新載入，確保資料最新
+            calendarViewModel.loadMonth(calendarViewModel.currentMonth)
+        }
         .sheet(isPresented: $showDailyView) {
-            NavigationView {
+            NavigationStack {
                 DailyMedicationView(date: calendarViewModel.selectedDate) {
                     // 當藥物記錄更新時，重新載入日曆月份資料
                     calendarViewModel.loadMonth(calendarViewModel.currentMonth)

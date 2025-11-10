@@ -18,15 +18,18 @@ class DailyMedicationViewModel: ObservableObject {
 
     init(date: Date = Date()) {
         self.selectedDate = date
+        print("🟢 DailyMedicationViewModel initialized for date: \(date)")
         loadMedications()
     }
 
     /// 載入指定日期的藥物記錄
     func loadMedications() {
         isLoading = true
+        print("🟢 Loading medications for: \(selectedDate)")
 
         // 先從本地載入
         var localRecords = persistence.fetchRecords(for: selectedDate)
+        print("🟢 Local records found: \(localRecords.count)")
 
         // 如果本地沒有記錄，生成預設記錄
         if localRecords.isEmpty {
@@ -44,6 +47,8 @@ class DailyMedicationViewModel: ObservableObject {
 
         medications = localRecords.sorted { $0.scheduledTime < $1.scheduledTime }
         statistics = DailyStatistics.from(records: medications)
+        print("🟢 Medications loaded: \(medications.count)")
+        print("🟢 Statistics - Total: \(statistics.total), Completion: \(statistics.completionRate)%")
 
         // 從 API 同步
         Task {

@@ -14,9 +14,18 @@ class CalendarViewModel: ObservableObject {
     private let persistence = DataPersistenceService.shared
     private let api = SupabaseService.shared
     private let dateService = DateService.shared
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
         loadMonth(Date())
+
+        NotificationCenter.default.publisher(for: .schedulesUpdated)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.loadMonth(self.currentMonth)
+            }
+            .store(in: &cancellables)
     }
 
     /// 載入指定月份的統計資料
@@ -27,14 +36,17 @@ class CalendarViewModel: ObservableObject {
         let startOfMonth = date.startOfMonth()
         let endOfMonth = date.endOfMonth()
 
-        // 獲取所有排程
+        // 獲取所有排程並清除已刪除排程的殘留記錄
         let schedules = persistence.fetchSchedules()
+        let validIds = Set(schedules.map { $0.id })
+        persistence.deleteRecordsNotIn(scheduleIds: validIds)
 
         // 為月份中的每一天生成記錄（如果不存在）
         generateMonthRecords(from: startOfMonth, to: endOfMonth, schedules: schedules)
 
         // 從本地載入所有記錄
         var localRecords = persistence.fetchRecords(from: startOfMonth, to: endOfMonth)
+        localRecords = localRecords.filter { validIds.contains($0.scheduleId) }
 
         // 更新過期記錄的狀態
         localRecords = dateService.updateExpiredRecords(localRecords)
@@ -47,10 +59,11 @@ class CalendarViewModel: ObservableObject {
             do {
                 let apiRecords = try await api.fetchRecordsRange(from: startOfMonth, to: endOfMonth)
                 let updatedRecords = dateService.updateExpiredRecords(apiRecords)
-                monthStatistics = dateService.calculateMonthStatistics(from: updatedRecords)
+                let filteredRecords = updatedRecords.filter { validIds.contains($0.scheduleId) }
+                monthStatistics = dateService.calculateMonthStatistics(from: filteredRecords)
 
                 // 更新本地資料
-                persistence.saveAllRecords(apiRecords)
+                persistence.saveAllRecords(filteredRecords)
 
                 isLoading = false
             } catch {
@@ -67,15 +80,17 @@ class CalendarViewModel: ObservableObject {
         var currentDate = startDate
 
         while currentDate <= endDate {
-            // 檢查該日是否已有記錄
-            let existingRecords = persistence.fetchRecords(for: currentDate)
+            var records = persistence.fetchRecords(for: currentDate)
 
-            // 如果沒有記錄，從排程生成
-            if existingRecords.isEmpty {
-                let newRecords = dateService.generateDailyRecords(for: currentDate, schedules: schedules)
+            for schedule in schedules {
+                guard dateService.shouldGenerateMedication(schedule: schedule, for: currentDate) else {
+                    continue
+                }
 
-                // 保存新生成的記錄
-                for record in newRecords {
+                let hasRecord = records.contains { $0.scheduleId == schedule.id }
+                if !hasRecord {
+                    let record = DailyMedicationRecord.from(schedule: schedule, date: currentDate)
+                    records.append(record)
                     persistence.addRecord(record)
                 }
             }

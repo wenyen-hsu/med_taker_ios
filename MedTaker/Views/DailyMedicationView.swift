@@ -4,7 +4,6 @@ import SwiftUI
 struct DailyMedicationView: View {
     @StateObject private var viewModel: DailyMedicationViewModel
     @Environment(\.dismiss) var dismiss
-    @State private var showLogDialog = false
     @State private var selectedMedication: DailyMedicationRecord?
     var onMedicationUpdated: (() -> Void)? = nil
 
@@ -27,6 +26,7 @@ struct DailyMedicationView: View {
             }
             .padding()
         }
+        .background(Color(.systemBackground)) // 使用系統背景色
         .navigationTitle("每日追蹤")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -36,15 +36,10 @@ struct DailyMedicationView: View {
                 }
             }
         }
-        .sheet(isPresented: $showLogDialog) {
-            if let medication = selectedMedication {
-                NavigationView {
-                    LogIntakeView(medication: medication) { actualTime, notes in
-                        viewModel.logIntake(id: medication.id, actualTime: actualTime, notes: notes)
-                        // 通知日曆視圖更新
-                        onMedicationUpdated?()
-                    }
-                }
+        .navigationDestination(item: $selectedMedication) { medication in
+            LogIntakeView(medication: medication) { actualTime, notes in
+                viewModel.logIntake(id: medication.id, actualTime: actualTime, notes: notes)
+                onMedicationUpdated?()
             }
         }
         .alert("錯誤", isPresented: $viewModel.showError) {
@@ -122,7 +117,6 @@ struct DailyMedicationView: View {
                         medication: medication,
                         onLog: {
                             selectedMedication = medication
-                            showLogDialog = true
                         },
                         onSkip: {
                             viewModel.markAsSkipped(id: medication.id)
