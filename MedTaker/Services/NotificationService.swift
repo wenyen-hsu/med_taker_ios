@@ -409,11 +409,6 @@ extension NotificationService: UNUserNotificationCenterDelegate {
 
         DataPersistenceService.shared.updateRecord(updatedRecord)
 
-        // 同步到 API
-        Task {
-            try? await SupabaseService.shared.updateRecord(updatedRecord)
-        }
-
         print("已記錄服藥：\(record.medicationName)")
     }
 
@@ -430,11 +425,6 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         updatedRecord.status = .skipped
 
         DataPersistenceService.shared.updateRecord(updatedRecord)
-
-        // 同步到 API
-        Task {
-            try? await SupabaseService.shared.updateRecord(updatedRecord)
-        }
 
         print("已跳過：\(record.medicationName)")
     }

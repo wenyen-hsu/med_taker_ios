@@ -11,7 +11,6 @@ class MedicationScheduleViewModel: ObservableObject {
     @Published var showError = false
 
     private let persistence = DataPersistenceService.shared
-    private let api = SupabaseService.shared
     private let notificationService = NotificationService.shared
 
     init() {
@@ -26,19 +25,7 @@ class MedicationScheduleViewModel: ObservableObject {
         // 首先從本地載入
         schedules = persistence.fetchSchedules()
 
-        // 然後嘗試從 API 同步
-        Task {
-            do {
-                let apiSchedules = try await api.fetchSchedules()
-                schedules = apiSchedules
-                persistence.saveAllSchedules(apiSchedules)
-                isLoading = false
-            } catch {
-                // 如果 API 失敗，繼續使用本地資料
-                errorMessage = "無法同步資料：\(error.localizedDescription)"
-                isLoading = false
-            }
-        }
+        isLoading = false
     }
 
     /// 新增排程
@@ -55,18 +42,6 @@ class MedicationScheduleViewModel: ObservableObject {
         // 為該排程生成未來的每日記錄（從今天開始的 60 天）
         generateRecordsForSchedule(schedule)
 
-        // 同步到 API（靜默失敗，因為本地已保存）
-        Task {
-            do {
-                try await api.addSchedule(schedule)
-            } catch {
-                // 僅記錄錯誤，不顯示給用戶，因為本地已成功保存
-                print("⚠️ API 同步失敗（排程已保存到本地）：\(error.localizedDescription)")
-                // 可選：顯示較溫和的提示
-                // errorMessage = "排程已保存，但雲端同步失敗"
-                // showError = true
-            }
-        }
     }
 
     /// 為新排程生成每日記錄
@@ -110,14 +85,6 @@ class MedicationScheduleViewModel: ObservableObject {
                 notificationService.cancelNotification(id: schedule.id)
             }
 
-            Task {
-                do {
-                    try await api.updateSchedule(schedule)
-                } catch {
-                    // 僅記錄錯誤，不顯示給用戶，因為本地已成功保存
-                    print("⚠️ API 同步失敗（排程已更新到本地）：\(error.localizedDescription)")
-                }
-            }
         }
     }
 
@@ -134,14 +101,6 @@ class MedicationScheduleViewModel: ObservableObject {
         // 取消通知
         notificationService.cancelNotification(id: schedule.id)
 
-        Task {
-            do {
-                try await api.deleteSchedule(id: schedule.id)
-            } catch {
-                // 僅記錄錯誤，不顯示給用戶，因為本地已成功刪除
-                print("⚠️ API 同步失敗（排程已從本地刪除）：\(error.localizedDescription)")
-            }
-        }
     }
 
     /// 切換排程活動狀態

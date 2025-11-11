@@ -10,8 +10,7 @@ MedTaker 是一個原生 iOS 應用程式，用於追蹤和管理您的日常用
 - 📅 **互動式日曆**：視覺化顯示每月服藥完成情況
 - 📊 **每日追蹤**：詳細的每日用藥記錄和統計
 - ⏰ **準時判定**：自動判斷服藥是否準時（±15 分鐘）
-- 🔄 **資料同步**：與 Supabase 後端服務同步
-- 📱 **離線支持**：本地資料儲存，無網路也能使用
+- 💾 **完全離線**：所有資料皆儲存在裝置的本地儲存，不需網路即可使用
 
 ## 🏗️ 專案結構
 
@@ -35,7 +34,7 @@ MedTaker/
 │   └── SettingsView.swift
 ├── Services/                   # 服務層
 │   ├── DataPersistenceService.swift
-│   ├── SupabaseService.swift
+│   ├── NotificationService.swift
 │   └── DateService.swift
 ├── Utilities/                  # 工具類
 │   └── DateExtensions.swift
@@ -65,7 +64,7 @@ ViewModel (ObservableObject)
     ↕ CRUD Operations
 Service Layer
     ↕
-UserDefaults ← → Supabase API
+ViewModel ↔ DataPersistenceService (UserDefaults)
 ```
 
 ## 🚀 技術規格
@@ -75,8 +74,7 @@ UserDefaults ← → Supabase API
 - **UI 框架**：SwiftUI
 - **架構模式**：MVVM
 - **資料持久化**：UserDefaults（可升級至 Core Data）
-- **網路層**：URLSession + async/await
-- **後端服務**：Supabase
+- **網路層/後端**：無；App 完全離線運作
 
 ## 📦 安裝與設定
 
@@ -100,17 +98,7 @@ UserDefaults ← → Supabase API
    # 在 Xcode 中開啟 MedTaker 資料夾
    ```
 
-3. **配置 Supabase（選填）**
-
-   如果您想使用自己的 Supabase 專案：
-
-   在 `Services/SupabaseService.swift` 中更新：
-   ```swift
-   private let projectId = "YOUR_PROJECT_ID"
-   private let publicAnonKey = "YOUR_ANON_KEY"
-   ```
-
-4. **建置並執行**
+3. **建置並執行**
 
    - 選擇目標裝置或模擬器
    - 按下 Cmd+R 執行專案

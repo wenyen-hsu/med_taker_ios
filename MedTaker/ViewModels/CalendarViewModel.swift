@@ -12,7 +12,6 @@ class CalendarViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let persistence = DataPersistenceService.shared
-    private let api = SupabaseService.shared
     private let dateService = DateService.shared
     private var cancellables = Set<AnyCancellable>()
 
@@ -54,24 +53,7 @@ class CalendarViewModel: ObservableObject {
         // 計算統計
         monthStatistics = dateService.calculateMonthStatistics(from: localRecords)
 
-        // 從 API 同步
-        Task {
-            do {
-                let apiRecords = try await api.fetchRecordsRange(from: startOfMonth, to: endOfMonth)
-                let updatedRecords = dateService.updateExpiredRecords(apiRecords)
-                let filteredRecords = updatedRecords.filter { validIds.contains($0.scheduleId) }
-                monthStatistics = dateService.calculateMonthStatistics(from: filteredRecords)
-
-                // 更新本地資料
-                persistence.saveAllRecords(filteredRecords)
-
-                isLoading = false
-            } catch {
-                // API 失敗時靜默處理，使用本地數據
-                print("⚠️ 無法同步日曆資料：\(error.localizedDescription)")
-                isLoading = false
-            }
-        }
+        isLoading = false
     }
 
     /// 為月份中的每一天生成記錄（如果不存在）

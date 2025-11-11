@@ -141,11 +141,6 @@ struct SettingsView: View {
         deletedCount = persistence.deleteAllRecords()
         showResetSuccess = true
 
-        // 同步到 API
-        Task {
-            let api = SupabaseService.shared
-            _ = try? await api.resetAllRecords()
-        }
     }
 }
 

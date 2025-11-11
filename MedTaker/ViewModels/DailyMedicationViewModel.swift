@@ -13,7 +13,6 @@ class DailyMedicationViewModel: ObservableObject {
     @Published var showError = false
 
     private let persistence = DataPersistenceService.shared
-    private let api = SupabaseService.shared
     private let dateService = DateService.shared
 
     init(date: Date = Date()) {
@@ -50,29 +49,7 @@ class DailyMedicationViewModel: ObservableObject {
         print("🟢 Medications loaded: \(medications.count)")
         print("🟢 Statistics - Total: \(statistics.total), Completion: \(statistics.completionRate)%")
 
-        // 從 API 同步
-        Task {
-            do {
-                let apiRecords = try await api.fetchDailyRecords(for: selectedDate)
-
-                if !apiRecords.isEmpty {
-                    let updatedRecords = dateService.updateExpiredRecords(apiRecords)
-                    medications = updatedRecords.sorted { $0.scheduledTime < $1.scheduledTime }
-                    statistics = DailyStatistics.from(records: medications)
-
-                    // 更新本地
-                    for record in apiRecords {
-                        persistence.updateRecord(record)
-                    }
-                }
-
-                isLoading = false
-            } catch {
-                // API 同步失敗但本地資料已載入，靜默處理
-                print("⚠️ API 同步失敗（本地資料已載入）：\(error.localizedDescription)")
-                isLoading = false
-            }
-        }
+        isLoading = false
     }
 
     /// 記錄服藥
@@ -89,14 +66,6 @@ class DailyMedicationViewModel: ObservableObject {
 
         persistence.updateRecord(record)
 
-        Task {
-            do {
-                try await api.updateRecord(record)
-            } catch {
-                // API 同步失敗但本地已更新，靜默處理
-                print("⚠️ API 同步失敗（記錄已保存到本地）：\(error.localizedDescription)")
-            }
-        }
     }
 
     /// 標記為跳過
@@ -111,14 +80,6 @@ class DailyMedicationViewModel: ObservableObject {
 
         persistence.updateRecord(record)
 
-        Task {
-            do {
-                try await api.updateRecord(record)
-            } catch {
-                // API 同步失敗但本地已更新，靜默處理
-                print("⚠️ API 同步失敗（記錄已保存到本地）：\(error.localizedDescription)")
-            }
-        }
     }
 
     /// 取消記錄（恢復為待服用）
@@ -135,14 +96,6 @@ class DailyMedicationViewModel: ObservableObject {
 
         persistence.updateRecord(record)
 
-        Task {
-            do {
-                try await api.updateRecord(record)
-            } catch {
-                // API 同步失敗但本地已更新，靜默處理
-                print("⚠️ API 同步失敗（記錄已保存到本地）：\(error.localizedDescription)")
-            }
-        }
     }
 
     /// 更改日期
