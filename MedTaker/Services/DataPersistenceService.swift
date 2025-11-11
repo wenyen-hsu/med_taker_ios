@@ -163,7 +163,7 @@ class DataPersistenceService {
 
     /// 刪除所有不屬於有效排程的記錄
     func deleteRecordsNotIn(scheduleIds: Set<String>) {
-        var records = fetchAllRecords()
+        let records = fetchAllRecords()
         let filtered = records.filter { scheduleIds.contains($0.scheduleId) }
         if filtered.count != records.count {
             saveRecords(filtered)

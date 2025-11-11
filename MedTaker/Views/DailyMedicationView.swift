@@ -5,6 +5,7 @@ struct DailyMedicationView: View {
     @StateObject private var viewModel: DailyMedicationViewModel
     @Environment(\.dismiss) var dismiss
     @State private var selectedMedication: DailyMedicationRecord?
+    @State private var showLogIntakeSheet = false
     var onMedicationUpdated: (() -> Void)? = nil
 
     init(date: Date, onMedicationUpdated: (() -> Void)? = nil) {
@@ -36,11 +37,30 @@ struct DailyMedicationView: View {
                 }
             }
         }
-        .navigationDestination(item: $selectedMedication) { medication in
-            LogIntakeView(medication: medication) { actualTime, notes in
-                viewModel.logIntake(id: medication.id, actualTime: actualTime, notes: notes)
-                onMedicationUpdated?()
+        .fullScreenCover(isPresented: $showLogIntakeSheet) {
+            if let medication = selectedMedication {
+                LogIntakeView(medication: medication) { actualTime, notes in
+                    print("✅ 確認記錄服藥")
+                    viewModel.logIntake(id: medication.id, actualTime: actualTime, notes: notes)
+                    onMedicationUpdated?()
+                    showLogIntakeSheet = false
+                }
+                .interactiveDismissDisabled(false)
+                .onAppear {
+                    print("🟢 LogIntakeView 已顯示")
+                }
+                .onDisappear {
+                    print("🔴 LogIntakeView 已關閉")
+                }
+            } else {
+                Text("錯誤：無法載入藥物資訊")
+                    .onAppear {
+                        print("❌ selectedMedication 為 nil")
+                    }
             }
+        }
+        .onChange(of: showLogIntakeSheet) { isShowing in
+            print("🔄 showLogIntakeSheet 變更為: \(isShowing)")
         }
         .alert("錯誤", isPresented: $viewModel.showError) {
             Button("確定", role: .cancel) { }
@@ -116,7 +136,11 @@ struct DailyMedicationView: View {
                     MedicationCard(
                         medication: medication,
                         onLog: {
+                            print("🔵 點擊記錄服藥按鈕: \(medication.medicationName)")
                             selectedMedication = medication
+                            DispatchQueue.main.async {
+                                showLogIntakeSheet = true
+                            }
                         },
                         onSkip: {
                             viewModel.markAsSkipped(id: medication.id)
@@ -250,11 +274,12 @@ struct MedicationCard: View {
                         Text("記錄服藥")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 12)
                     .background(Color.green)
                     .foregroundColor(.white)
                     .cornerRadius(8)
                 }
+                .buttonStyle(.plain)
 
                 Button(action: onSkip) {
                     HStack {
@@ -262,11 +287,12 @@ struct MedicationCard: View {
                         Text("跳過")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 12)
                     .background(Color.orange)
                     .foregroundColor(.white)
                     .cornerRadius(8)
                 }
+                .buttonStyle(.plain)
             }
         } else if medication.status.isCompleted {
             Button(action: onCancel) {
@@ -275,11 +301,12 @@ struct MedicationCard: View {
                     Text("取消記錄")
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
                 .background(Color.gray)
                 .foregroundColor(.white)
                 .cornerRadius(8)
             }
+            .buttonStyle(.plain)
         }
     }
 }

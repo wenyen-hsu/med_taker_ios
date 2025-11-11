@@ -18,7 +18,7 @@ struct NotificationSettingsView: View {
             if notificationService.authorizationStatus == .authorized {
                 Section {
                     Toggle("開啟服藥提醒", isOn: $notificationService.isNotificationEnabled)
-                        .onChange(of: notificationService.isNotificationEnabled) { _, newValue in
+                        .onChange(of: notificationService.isNotificationEnabled) { newValue in
                             if newValue {
                                 notificationService.rescheduleAllNotifications()
                             } else {
@@ -34,7 +34,7 @@ struct NotificationSettingsView: View {
                             Text("15 分鐘").tag(15)
                             Text("30 分鐘").tag(30)
                         }
-                        .onChange(of: notificationService.reminderMinutesBefore) { _, _ in
+                        .onChange(of: notificationService.reminderMinutesBefore) { _ in
                             // 重新排程所有通知
                             notificationService.rescheduleAllNotifications()
                         }

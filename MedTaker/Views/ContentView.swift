@@ -38,7 +38,7 @@ struct ContentView: View {
             .tag(2)
         }
         .accentColor(.blue)
-        .onChange(of: selectedTab) { oldValue, newValue in
+        .onChange(of: selectedTab) { newValue in
             // 當切換回日曆 tab 時，重新載入以確保顯示最新資料
             if newValue == 0 {
                 calendarViewModel.loadMonth(calendarViewModel.currentMonth)

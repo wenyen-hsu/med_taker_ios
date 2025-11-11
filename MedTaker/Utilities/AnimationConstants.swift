@@ -221,7 +221,7 @@ struct BounceEffectModifier<T: Equatable>: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scaleEffect(scale)
-            .onChange(of: trigger) { _, _ in
+            .onChange(of: trigger) { _ in
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                     scale = 1.2
                 }
@@ -241,7 +241,7 @@ struct ShakeEffectModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .offset(x: offset)
-            .onChange(of: shakes) { _, _ in
+            .onChange(of: shakes) { _ in
                 withAnimation(.linear(duration: 0.1).repeatCount(3, autoreverses: true)) {
                     offset = 10
                 }
@@ -268,7 +268,7 @@ struct PulseEffectModifier: ViewModifier {
                     startPulsing()
                 }
             }
-            .onChange(of: active) { _, newValue in
+            .onChange(of: active) { newValue in
                 if newValue {
                     startPulsing()
                 } else {
