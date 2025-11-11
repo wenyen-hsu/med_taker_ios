@@ -78,17 +78,34 @@ struct LogIntakeView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
-                        dismiss()
+                        // 先隱藏鍵盤再關閉
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            dismiss()
+                        }
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("確認") {
-                        onConfirm(actualTime, notes)
-                        dismiss()
+                        confirmLog()
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func confirmLog() {
+        // 先隱藏鍵盤，避免關閉視圖時出現鍵盤會話錯誤
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+
+        onConfirm(actualTime, notes)
+
+        // 稍微延遲關閉，讓鍵盤有時間完全收起
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            dismiss()
         }
     }
 

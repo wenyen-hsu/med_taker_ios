@@ -94,7 +94,11 @@ struct AddMedicationView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
-                        dismiss()
+                        // 先隱藏鍵盤再關閉
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            dismiss()
+                        }
                     }
                 }
 
@@ -109,6 +113,9 @@ struct AddMedicationView: View {
     }
 
     private func saveSchedule() {
+        // 先隱藏鍵盤，避免關閉視圖時出現鍵盤會話錯誤
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+
         let schedule = MedicationSchedule(
             name: name,
             dosage: dosage,
@@ -121,7 +128,11 @@ struct AddMedicationView: View {
         )
 
         onSave(schedule)
-        dismiss()
+
+        // 稍微延遲關閉，讓鍵盤有時間完全收起
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            dismiss()
+        }
     }
 }
 

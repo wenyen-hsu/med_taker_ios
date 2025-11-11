@@ -39,18 +39,24 @@ class MedicationScheduleViewModel: ObservableObject {
         // 創建通知
         notificationService.scheduleNotification(for: schedule)
 
-        // 為該排程生成未來的每日記錄（從今天開始的 60 天）
-        generateRecordsForSchedule(schedule)
-
+        // 在背景執行緒生成記錄，避免阻塞 UI
+        Task.detached(priority: .userInitiated) {
+            await self.generateRecordsForSchedule(schedule)
+        }
     }
 
-    /// 為新排程生成每日記錄
-    private func generateRecordsForSchedule(_ schedule: MedicationSchedule) {
+    /// 為新排程生成每日記錄（在背景執行緒）
+    private func generateRecordsForSchedule(_ schedule: MedicationSchedule) async {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let dateService = DateService.shared
 
-        // 生成未來 60 天的記錄
+        // 獲取所有現有記錄（一次性讀取）
+        var allRecords = persistence.fetchAllRecords()
+
+        // 生成未來 60 天的新記錄
+        var newRecords: [DailyMedicationRecord] = []
+
         for dayOffset in 0..<60 {
             guard let date = calendar.date(byAdding: .day, value: dayOffset, to: today) else {
                 continue
@@ -59,14 +65,22 @@ class MedicationScheduleViewModel: ObservableObject {
             // 檢查該排程在該日期是否應該生成記錄
             if dateService.shouldGenerateMedication(schedule: schedule, for: date) {
                 // 檢查是否已存在該排程在該日期的記錄
-                let existingRecords = persistence.fetchRecords(for: date)
-                let alreadyExists = existingRecords.contains { $0.scheduleId == schedule.id }
+                let alreadyExists = allRecords.contains {
+                    $0.scheduleId == schedule.id &&
+                    calendar.isDate($0.date, inSameDayAs: date)
+                }
 
                 if !alreadyExists {
                     let record = DailyMedicationRecord.from(schedule: schedule, date: date)
-                    persistence.addRecord(record)
+                    newRecords.append(record)
                 }
             }
+        }
+
+        // 批次儲存所有新記錄（一次性寫入）
+        if !newRecords.isEmpty {
+            allRecords.append(contentsOf: newRecords)
+            persistence.saveAllRecords(allRecords)
         }
     }
 

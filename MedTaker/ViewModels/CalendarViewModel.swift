@@ -59,21 +59,28 @@ class CalendarViewModel: ObservableObject {
     /// 為月份中的每一天生成記錄（如果不存在）
     private func generateMonthRecords(from startDate: Date, to endDate: Date, schedules: [MedicationSchedule]) {
         let calendar = Calendar.current
+
+        // 一次性獲取所有現有記錄
+        var allRecords = persistence.fetchAllRecords()
+        var newRecords: [DailyMedicationRecord] = []
         var currentDate = startDate
 
         while currentDate <= endDate {
-            var records = persistence.fetchRecords(for: currentDate)
-
             for schedule in schedules {
                 guard dateService.shouldGenerateMedication(schedule: schedule, for: currentDate) else {
                     continue
                 }
 
-                let hasRecord = records.contains { $0.scheduleId == schedule.id }
+                // 檢查記錄是否已存在
+                let hasRecord = allRecords.contains {
+                    $0.scheduleId == schedule.id &&
+                    calendar.isDate($0.date, inSameDayAs: currentDate)
+                }
+
                 if !hasRecord {
                     let record = DailyMedicationRecord.from(schedule: schedule, date: currentDate)
-                    records.append(record)
-                    persistence.addRecord(record)
+                    newRecords.append(record)
+                    allRecords.append(record) // 添加到本地副本以避免重複生成
                 }
             }
 
@@ -82,6 +89,11 @@ class CalendarViewModel: ObservableObject {
                 break
             }
             currentDate = nextDate
+        }
+
+        // 批次儲存所有新記錄
+        if !newRecords.isEmpty {
+            persistence.saveAllRecords(allRecords)
         }
     }
 
